@@ -48,6 +48,7 @@ def signed_rupiah(value) -> str:
 
 templates.env.filters["rupiah"] = rupiah
 templates.env.filters["signed_rupiah"] = signed_rupiah
+templates.env.filters["minus"] = lambda value: str(value).replace("-", "−")
 
 
 def wib_time(value) -> str:

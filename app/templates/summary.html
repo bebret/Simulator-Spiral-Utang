@@ -75,12 +75,12 @@
       <p class="small" style="font-family: ui-monospace, monospace;">
         {{ (summary.win_probability * 100)|round|int }}% × {{ payout_mult|int }} = {{ (summary.win_probability * payout_mult * 100)|round|int }}%
         &nbsp;→&nbsp; {{ (summary.win_probability * payout_mult * 100)|round|int }}% − 100% =
-        <strong>{{ (summary.expected_value_per_bet * 100)|round|int }}%</strong>
+        <strong>{{ (summary.expected_value_per_bet * 100)|round|int|minus }}%</strong>
       </p>
       <p>
-        Artinya rata-rata <strong>setiap {{ 100000|rupiah }} taruhan kembali
-        {{ ((1 + summary.expected_value_per_bet) * 100000)|round|int|rupiah }}</strong>.
-        Semakin lama bermain, semakin pasti hasilnya mendekati kerugian itu.
+        Artinya, dari setiap <strong>{{ 100000|rupiah }}</strong> yang dipertaruhkan,
+        rata-rata hanya <strong>{{ ((1 + summary.expected_value_per_bet) * 100000)|round|int|rupiah }}</strong>
+        yang kembali. Semakin lama bermain, semakin pasti hasilnya mendekati kerugian itu.
       </p>
       <p class="muted small">
         Mesin slot asli sering memakai suara, kilau, dan rekayasa “hampir menang” untuk
