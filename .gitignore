@@ -1,0 +1,21 @@
+# Secrets — never commit the real .env
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Local database files (not used in Docker, but ignored just in case)
+*.sqlite3
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local screenshots
+screenshots/local-*.png
