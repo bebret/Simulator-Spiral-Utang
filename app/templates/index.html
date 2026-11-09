@@ -10,6 +10,22 @@
   <div class="edu-banner">SIMULASI EDUKASI — TIDAK ADA UANG ASLI.</div>
 
   <main class="narrow">
+    <div class="account-bar">
+      {% if account %}
+      <span>Masuk sebagai <strong>{{ account.username }}</strong></span>
+      <span class="dot">·</span>
+      <a href="/my">Simulasi saya</a>
+      <form method="post" action="/logout">
+        <button class="link" type="submit">Keluar</button>
+      </form>
+      {% else %}
+      <a href="/login">Masuk</a>
+      <span class="dot">·</span>
+      <a href="/register">Daftar</a>
+      <span class="muted small">(opsional, untuk menyimpan simulasi)</span>
+      {% endif %}
+    </div>
+
     <section class="hero">
       <span class="eyebrow">Literasi keuangan</span>
       <h1>Simulator Spiral Utang</h1>

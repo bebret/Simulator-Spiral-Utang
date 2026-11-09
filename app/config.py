@@ -39,3 +39,6 @@ LOAN_OPTIONS = [
 BET_WIN_PROB = _float("BET_WIN_PROB", 0.40)
 BET_PAYOUT_MULT = _float("BET_PAYOUT_MULT", 2.0)
 MAX_ADVANCE_DAYS = _int("MAX_ADVANCE_DAYS", 30)
+
+# Kunci penandatangan cookie session. Ganti dengan nilai acak di .env.
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure-secret-change-me")

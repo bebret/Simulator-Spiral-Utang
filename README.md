@@ -29,8 +29,10 @@ tariknya:
 - Layar refleksi menjelaskan bahwa mesin slot asli memakai suara dan near-miss
   untuk memperkuat dorongan bermain.
 
-Batasan yang disengaja: tidak ada login, KYC, penagihan, notifikasi, leaderboard,
-upload file, autoplay, free spin, bonus, atau "double or nothing".
+Batasan yang disengaja: tidak ada KYC, penagihan, notifikasi, leaderboard, upload
+file, autoplay, free spin, bonus, atau "double or nothing". Login **opsional**
+ditambahkan di luar spesifikasi (lihat bagian Akun) untuk menyimpan simulasi;
+bermain tanpa akun tetap bisa.
 
 ## Fitur
 
@@ -43,6 +45,8 @@ upload file, autoplay, free spin, bonus, atau "double or nothing".
 7. Layar refleksi: saldo, utang, total biaya admin, total bunga, total kerugian
    taruhan, jumlah pinjaman, grafik saldo vs utang, dan nilai harapan taruhan.
 8. Reset simulasi (menghapus pemain beserta ledger-nya).
+9. **Akun opsional**: daftar/masuk untuk menyimpan beberapa simulasi dan
+   melanjutkannya dari perangkat lain. Tanpa akun pun tetap bisa bermain.
 
 ## Arsitektur
 
@@ -86,6 +90,39 @@ docker compose --profile tools up -d
 
 Buka <http://localhost:8080>. Server: `db`, user/password/database sesuai `.env`.
 
+## Akun (opsional)
+
+Halaman awal tetap menawarkan **main cepat dengan nickname** seperti di
+spesifikasi. Kalau ingin simulasinya tersimpan dan bisa dibuka lagi dari
+perangkat lain, buat akun lewat **Daftar** atau masuk lewat **Masuk**.
+
+- Password disimpan sebagai hash **scrypt** (`scrypt$N$r$p$salt$hash`), bukan
+  plaintext. Salt dibuat acak per akun.
+- Session memakai cookie bertanda tangan (`SECRET_KEY`) dengan `SameSite=Lax`.
+- Simulasi yang dibuat saat kamu masuk otomatis terikat ke akun dan muncul di
+  `/my` ("Simulasi saya"), lengkap dengan saldo dan utang terkini.
+- Simulasi anonim (tanpa akun) tetap bisa dibuka siapa pun yang punya link,
+  sama seperti sebelumnya. Kalau dihapus, ledger-nya ikut terhapus.
+- Simulasi milik akun lain tidak bisa dibuka: halaman HTML mengarahkan ke
+  `/login`, sedangkan endpoint JSON membalas 404.
+
+Registrasi hanya butuh username (3–30 karakter: huruf kecil, angka, garis
+bawah) dan password minimal 8 karakter. Tidak ada email, nomor telepon, atau
+data pribadi lain.
+
+Endpoint akun:
+
+| Method | Endpoint | Fungsi |
+|---|---|---|
+| GET/POST | `/login` | Form masuk (POST memakai `application/x-www-form-urlencoded`) |
+| GET/POST | `/register` | Form daftar |
+| POST | `/logout` | Keluar, lalu diarahkan ke `/` |
+| GET | `/my` | Daftar simulasi milik akun yang sedang masuk |
+
+Catatan: penambahan login ini **di luar** `PROJECT_SPEC.md` (bagian 4
+menaruhnya di daftar "jangan dibuat"). Fitur ini bisa dilepas tanpa mengubah
+alur utama karena pemain tanpa akun tetap didukung.
+
 ## Konfigurasi
 
 Semua nilai dibaca dari environment variable (`.env`), file contohnya
@@ -100,9 +137,15 @@ Semua nilai dibaca dari environment variable (`.env`), file contohnya
 | Peluang menang taruhan | 0,40 | `BET_WIN_PROB` |
 | Pengali kemenangan | 2× | `BET_PAYOUT_MULT` |
 | Maksimum hari "maju waktu" | 30 | `MAX_ADVANCE_DAYS` |
+| Kunci penandatangan cookie session | nilai contoh | `SECRET_KEY` |
 
-Dengan default tersebut, nilai harapan per taruhan = `0,40 × 2 − 1 = −0,20`:
-rata-rata 20% dari taruhan hilang.
+Nilai yang benar-benar dipakai selalu berasal dari `.env`. `.env.example` di
+repo ini memakai `BET_WIN_PROB=0.20`; kembalikan ke `0.40` bila ingin persis
+nilai default pada tabel di atas.
+
+Dengan default spesifikasi, nilai harapan per taruhan = `0,40 × 2 − 1 = −0,20`:
+rata-rata 20% dari taruhan hilang. Dengan `0,20` menjadi `−0,60` (rugi rata-rata
+60%), dan angka di layar refleksi ikut menyesuaikan otomatis.
 
 ## Endpoint
 
@@ -119,7 +162,7 @@ rata-rata 20% dari taruhan hilang.
 | GET | `/players/{id}/ledger` | Riwayat transaksi |
 | GET | `/players/{id}/summary` | Ringkasan + data grafik |
 
-Halaman HTML: `/`, `/play/{id}`, `/play/{id}/summary`.
+Halaman HTML: `/`, `/play/{id}`, `/play/{id}/summary`, `/login`, `/register`, `/my`.
 
 Contoh:
 
@@ -160,25 +203,29 @@ Ticker dan layar refleksi menampilkan `total_bet_loss` (total taruhan − total
 kemenangan) sebagai **"Rugi Rp…"** bila bernilai positif dan **"Untung Rp…"**
 bila masih di atas (nilai harapan negatif, jadi untung hanya sementara).
 
-Tabel dibuat saat startup dengan `Base.metadata.create_all`. Ini cukup untuk
-proyek satu tabel kecil dan idempoten: saat container `app` dijalankan ulang,
-tabel yang sudah ada tidak dibuat lagi, dan datanya tetap ada karena disimpan
-oleh PostgreSQL di volume `pgdata` — bukan di filesystem container aplikasi.
-(Pilihan lain adalah `init.sql`, tapi itu hanya berjalan sekali saat volume
-masih kosong.)
+Tabel dibuat saat startup dengan `Base.metadata.create_all`, ditambah
+`ensure_schema()` yang menjalankan `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`
+untuk kolom baru pada tabel yang sudah ada. Keduanya idempoten, jadi data lama
+di volume `pgdata` tidak perlu dihapus saat skema berkembang. (Pilihan lain
+adalah `init.sql`, tapi itu hanya berjalan sekali saat volume masih kosong.)
+
+**Tabel `accounts`** (opsional) — `id`, `username` (unik, 3–30 karakter),
+`password_hash` (scrypt), `created_at`. `players.account_id` menunjuk ke akun
+dengan `ON DELETE CASCADE`; nilainya `NULL` untuk pemain anonim.
 
 ## Struktur repository
 
 ```
 .
 ├── app/
-│   ├── main.py            # FastAPI: endpoint JSON + halaman HTML
+│   ├── main.py            # FastAPI: endpoint JSON + halaman HTML + akun
 │   ├── config.py          # pembacaan env var
-│   ├── db.py              # engine & session SQLAlchemy
-│   ├── models.py          # tabel players, ledger
+│   ├── db.py              # engine, session, dan penyesuaian skema
+│   ├── models.py          # tabel accounts, players, ledger
+│   ├── auth.py            # hash password scrypt & bantuan session
 │   ├── schemas.py         # validasi Pydantic
 │   ├── services.py        # logika bisnis (pinjaman, taruhan, bunga, ringkasan)
-│   ├── templates/         # index.html, play.html, summary.html
+│   ├── templates/         # index, play, summary, auth, my
 │   └── static/style.css
 ├── scripts/smoke_test.sh  # uji status code dengan curl
 ├── Dockerfile
@@ -267,7 +314,11 @@ Simpan hasil tangkapan layar di `docs/screenshots/`:
 
 ## Privasi dan keamanan
 
-- Tidak ada data pribadi asli: hanya nickname dan uang fiktif.
+- Tidak ada data pribadi asli: hanya nickname, username akun opsional, dan uang
+  fiktif. Tidak ada email, nomor telepon, NIK, atau alamat.
+- Password akun disimpan sebagai hash scrypt bersalt, bukan plaintext.
+- Session memakai cookie bertanda tangan `SECRET_KEY` dengan `SameSite=Lax`.
+  Untuk produksi, set `https_only=True` pada `SessionMiddleware` di belakang HTTPS.
 - Tidak ada secret di repository; hanya `.env.example` dengan nilai contoh.
 - `.env` di-ignore Git dan dikecualikan lewat `.dockerignore`.
 - Tidak ada integrasi payment gateway, rekening, atau e-wallet.

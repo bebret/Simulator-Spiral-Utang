@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulasi saya — {{ account.username }}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="edu-banner">SIMULASI EDUKASI — TIDAK ADA UANG ASLI.</div>
+
+  <header class="topbar">
+    <div class="brand">Simulator Spiral Utang
+      <span class="who">/ {{ account.username }}</span>
+    </div>
+    <div class="topbar-actions">
+      <a class="btn btn-ghost btn-small" href="/">Beranda</a>
+      <form method="post" action="/logout">
+        <button class="btn btn-ghost btn-small" type="submit">Keluar</button>
+      </form>
+    </div>
+  </header>
+
+  <main class="narrow">
+    <section class="hero">
+      <span class="eyebrow">Akun</span>
+      <h1>Simulasi saya</h1>
+      <p>Semua simulasi di bawah tersimpan di database dan bisa dilanjutkan kapan saja,
+        dari perangkat mana pun setelah masuk.</p>
+    </section>
+
+    <section class="panel panel-loan">
+      <h2>Buat simulasi baru</h2>
+      <form id="new-player-form">
+        <label for="nickname">Nickname (1–30 karakter)</label>
+        <div class="inline-form">
+          <input id="nickname" maxlength="30" required autocomplete="off"
+                 placeholder="mis. percobaan_2">
+          <button class="btn btn-primary" type="submit">Buat</button>
+        </div>
+      </form>
+      <p class="error" id="form-error" hidden></p>
+    </section>
+
+    <section class="panel">
+      <h2>Daftar simulasi</h2>
+
+      {% if rows %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nickname</th>
+              <th class="num">Kas</th>
+              <th class="num">Utang</th>
+              <th>Dibuat</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+            <tr>
+              <td>{{ row.player.nickname }}</td>
+              <td class="num">{{ row.cash|rupiah }}</td>
+              <td class="num">{{ row.debt|rupiah }}</td>
+              <td class="muted">{{ row.player.created_at|wib_time }}</td>
+              <td>
+                <a class="btn btn-ghost btn-small" href="/play/{{ row.player.id }}">Lanjut</a>
+                <a class="btn btn-ghost btn-small" href="/play/{{ row.player.id }}/summary">Ringkasan</a>
+                <button class="btn btn-danger btn-small" type="button"
+                        data-delete="{{ row.player.id }}">Hapus</button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="muted">Belum ada simulasi. Buat yang pertama lewat form di atas.</p>
+      {% endif %}
+    </section>
+
+    <p class="footer-note">
+      Simulasi yang dibuat saat kamu masuk otomatis terikat ke akun ini. Simulasi anonim
+      (tanpa akun) tetap bisa dibuka lewat link-nya, tetapi tidak muncul di daftar.
+    </p>
+  </main>
+
+  <script>
+    const form = document.getElementById("new-player-form");
+    const errorBox = document.getElementById("form-error");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorBox.hidden = true;
+      const nickname = document.getElementById("nickname").value.trim();
+      if (!nickname) {
+        errorBox.textContent = "Nickname tidak boleh kosong.";
+        errorBox.hidden = false;
+        return;
+      }
+
+      const response = await fetch("/players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nickname }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        errorBox.textContent = data.detail || "Gagal membuat simulasi.";
+        errorBox.hidden = false;
+        return;
+      }
+
+      const player = await response.json();
+      window.location.href = "/play/" + player.id;
+    });
+
+    document.querySelectorAll("[data-delete]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        if (!window.confirm("Hapus simulasi ini beserta seluruh riwayatnya?")) return;
+        await fetch("/players/" + button.dataset.delete, { method: "DELETE" });
+        window.location.reload();
+      });
+    });
+  </script>
+</body>
+</html>

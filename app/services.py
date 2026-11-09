@@ -94,8 +94,8 @@ def loans_taken_while_in_debt(entries: list[LedgerEntry]) -> int:
 
 
 # --- Aksi pemain ------------------------------------------------------------
-def create_player(db: Session, nickname: str) -> Player:
-    player = Player(nickname=nickname)
+def create_player(db: Session, nickname: str, account_id: int | None = None) -> Player:
+    player = Player(nickname=nickname, account_id=account_id)
     db.add(player)
     db.commit()
     db.refresh(player)

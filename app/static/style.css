@@ -112,6 +112,43 @@ body {
   font-weight: 500;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.topbar-actions form {
+  margin: 0;
+}
+
+.account-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.account-bar strong {
+  color: var(--ink);
+}
+
+.account-bar .dot {
+  color: var(--line-strong);
+}
+
+.account-bar form {
+  margin: 0;
+}
+
+.panel-auth {
+  max-width: 480px;
+}
+
 main {
   max-width: 1060px;
   margin: 0 auto;

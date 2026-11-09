@@ -8,14 +8,36 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .db import Base
 
 
+class Account(Base):
+    """Akun opsional. Pemain tanpa akun tetap bisa bermain lewat link."""
+
+    __tablename__ = "accounts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String(30), unique=True, nullable=False, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    players: Mapped[list["Player"]] = relationship(
+        back_populates="account", cascade="all, delete-orphan", passive_deletes=True
+    )
+
+
 class Player(Base):
     __tablename__ = "players"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     nickname: Mapped[str] = mapped_column(String(30), nullable=False)
+    account_id: Mapped[int | None] = mapped_column(
+        ForeignKey("accounts.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+    account: Mapped["Account | None"] = relationship(back_populates="players")
 
     entries: Mapped[list["LedgerEntry"]] = relationship(
         back_populates="player", cascade="all, delete-orphan", passive_deletes=True

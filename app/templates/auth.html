@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ "Masuk" if mode == "login" else "Daftar" }} — Simulator Spiral Utang</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="edu-banner">SIMULASI EDUKASI — TIDAK ADA UANG ASLI.</div>
+
+  <main class="narrow">
+    <section class="hero">
+      <span class="eyebrow">Akun</span>
+      <h1>{{ "Masuk" if mode == "login" else "Daftar" }}</h1>
+      <p>Akun hanya dipakai untuk menyimpan simulasi dan melanjutkannya dari perangkat
+        lain. Tidak perlu data pribadi: cukup username dan password.</p>
+    </section>
+
+    <section class="panel panel-auth">
+      <h2>{{ "Form masuk" if mode == "login" else "Form pendaftaran" }}</h2>
+
+      {% if error %}
+      <p class="error">{{ error }}</p>
+      {% endif %}
+
+      <form method="post" action="{{ '/login' if mode == 'login' else '/register' }}">
+        {% if mode == "login" %}
+        <input type="hidden" name="next" value="{{ next }}">
+        {% endif %}
+
+        <label for="username">Username</label>
+        <input id="username" name="username" value="{{ username }}" required
+               minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+"
+               autocomplete="username" autocapitalize="none" spellcheck="false"
+               placeholder="mis. albert_01">
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required
+               minlength="8" maxlength="128"
+               autocomplete="{{ 'current-password' if mode == 'login' else 'new-password' }}"
+               placeholder="minimal 8 karakter">
+
+        {% if mode == "register" %}
+        <label for="password2">Ulangi password</label>
+        <input id="password2" name="password2" type="password" required
+               minlength="8" maxlength="128" autocomplete="new-password">
+        {% endif %}
+
+        <button class="btn btn-primary btn-wide" type="submit">
+          {{ "Masuk" if mode == "login" else "Daftar" }}
+        </button>
+      </form>
+
+      <p class="muted small" style="margin-top:12px;">
+        {% if mode == "login" %}
+        Belum punya akun? <a href="/register">Daftar di sini</a>.
+        {% else %}
+        Sudah punya akun? <a href="/login">Masuk di sini</a>.
+        {% endif %}
+      </p>
+    </section>
+
+    <p class="muted small"><a href="/">Kembali ke beranda</a> · atau langsung
+      <a href="/">buat simulasi tanpa akun</a>.</p>
+  </main>
+</body>
+</html>
