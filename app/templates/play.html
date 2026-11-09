@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulasi — {{ player.nickname }}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="edu-banner">SIMULASI EDUKASI — TIDAK ADA UANG ASLI.</div>
+
+  <header class="topbar">
+    <div class="brand">Simulator Spiral Utang
+      <span class="who">/ {{ player.nickname }}</span>
+    </div>
+    <a class="btn btn-ghost" href="/play/{{ player.id }}/summary">Lihat ringkasan</a>
+  </header>
+
+  <main>
+    <section class="ticker" aria-live="polite">
+      <div class="ticker-item">
+        <span class="label">Saldo kas</span>
+        <span class="value" id="cash">{{ cash|rupiah }}</span>
+      </div>
+      <div class="ticker-item">
+        <span class="label">Total utang</span>
+        <span class="value negative" id="debt">{{ debt|rupiah }}</span>
+      </div>
+      <div class="ticker-item">
+        <span class="label">Kerugian taruhan</span>
+        <span class="value negative" id="bet-loss">{{ bet_loss|rupiah }}</span>
+      </div>
+    </section>
+
+    <div class="grid two">
+      <section class="panel">
+        <h2>Simulasi taruhan</h2>
+        <p class="muted small">Tiga reel, peluang menang {{ win_prob_pct }}%,
+          pengali {{ payout_mult|int }}×. Hasil ditentukan server.</p>
+
+        <div class="reels" aria-label="Reel slot">
+          <div class="reel" id="reel-0">—</div>
+          <div class="reel" id="reel-1">—</div>
+          <div class="reel" id="reel-2">—</div>
+        </div>
+
+        <p class="result" id="result" role="status" aria-live="polite">Pilih nominal lalu tekan PUTAR.</p>
+
+        <div class="chips" id="bet-chips">
+          {% for chip in bet_chips %}
+          <button type="button" class="chip" data-amount="{{ chip }}"
+                  aria-pressed="{{ 'true' if loop.first else 'false' }}">{{ chip|rupiah }}</button>
+          {% endfor %}
+        </div>
+        <label for="bet-custom">Atau nominal lain (Rp)</label>
+        <input id="bet-custom" type="number" min="1" step="1000" placeholder="mis. 25000">
+
+        <button class="btn btn-primary btn-wide" id="spin" type="button">PUTAR</button>
+        <p class="error" id="bet-error" hidden></p>
+        <p class="muted small" style="margin-top:10px;">
+          Setiap 10 putaran muncul pengingat. Tidak ada suara, bonus, atau free spin.
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2>Pinjaman</h2>
+        <p class="muted small">Biaya admin {{ admin_fee_pct|round|int }}% dipotong di depan,
+          tetapi utang bertambah sebesar pokok penuh. Batas total utang
+          {{ max_total_debt|rupiah }}.</p>
+
+        {% if debt > 0 %}
+        <p class="warning">
+          Peringatan: ini pinjaman ke-{{ loan_count + 1 }} saat utang belum lunas.
+          Pinjaman baru menambah beban bunga harian.
+        </p>
+        {% endif %}
+
+        <form id="loan-form">
+          <label for="loan-amount">Nominal pinjaman</label>
+          <select id="loan-amount">
+            {% for option in loan_options %}
+            <option value="{{ option }}">{{ option|rupiah }}</option>
+            {% endfor %}
+          </select>
+          <p class="muted small" id="loan-net"></p>
+          <button class="btn btn-primary" type="submit">Ajukan pinjaman</button>
+        </form>
+        <p class="error" id="loan-error" hidden></p>
+
+        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0;">
+
+        <h2>Bayar cicilan</h2>
+        <form id="repay-form" class="inline-form">
+          <input id="repay-amount" type="number" min="1" step="1000"
+                 placeholder="Nominal cicilan (Rp)" required>
+          <button class="btn btn-ghost" type="submit">Bayar</button>
+        </form>
+        <p class="error" id="repay-error" hidden></p>
+
+        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0;">
+
+        <h2>Maju waktu</h2>
+        <p class="muted small">Bunga {{ daily_interest_pct|round(1) }}% per hari dari total
+          utang berjalan (bunga berbunga).</p>
+        <form id="advance-form" class="inline-form">
+          <input id="advance-days" type="number" min="1" max="{{ max_advance_days }}"
+                 value="7" required>
+          <button class="btn btn-ghost" type="submit">Maju N hari</button>
+        </form>
+        <p class="error" id="advance-error" hidden></p>
+
+        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0;">
+
+        <button class="btn btn-danger" id="reset" type="button">Reset simulasi</button>
+      </section>
+    </div>
+
+    <p class="muted small" style="margin-bottom:10px;">
+      Saldo dan utang dihitung dari riwayat transaksi, bukan disimpan sebagai angka terpisah.
+    </p>
+
+    <section class="panel">
+      <h2>Riwayat transaksi</h2>
+      {% if entries %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Waktu</th>
+              <th>Jenis</th>
+              <th class="num">Kas</th>
+              <th class="num">Utang</th>
+              <th>Catatan</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set labels = {"LOAN": "Pinjaman", "FEE": "Biaya admin", "INTEREST": "Bunga",
+                             "BET": "Taruhan", "WIN": "Menang", "REPAY": "Cicilan"} %}
+            {% for entry in entries %}
+            <tr>
+              <td>{{ entry.created_at.strftime("%d/%m %H:%M") }}</td>
+              <td>{{ labels.get(entry.type, entry.type) }}</td>
+              <td class="num">{{ entry.cash_delta|signed_rupiah }}</td>
+              <td class="num">{{ entry.debt_delta|signed_rupiah }}</td>
+              <td class="muted">{{ entry.note or "—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="muted">Belum ada transaksi. Mulai dengan mengajukan pinjaman.</p>
+      {% endif %}
+    </section>
+
+    <p class="footer-note">
+      Simulasi ini meniru mekanisme pinjaman dan taruhan, bukan menawarkan keduanya.
+      Bila kamu atau orang di sekitarmu terjerat pinjol atau judi online, cari bantuan
+      pada layanan konseling kampus atau kanal pengaduan OJK (lihat halaman ringkasan).
+    </p>
+  </main>
+
+  <dialog id="reality-check">
+    <h2>Pengingat setelah 10 putaran</h2>
+    <p class="muted small">Berhenti sebentar dan lihat angkanya. Mesin slot asli
+      memakai suara dan kilau untuk membuat kamu terus bermain.</p>
+    <dl class="kv">
+      <dt>Putaran</dt><dd id="rc-rounds">0</dd>
+      <dt>Total taruhan</dt><dd id="rc-staked">Rp0</dd>
+      <dt>Total kerugian taruhan</dt><dd id="rc-loss">Rp0</dd>
+      <dt>Sisa utang</dt><dd id="rc-debt">Rp0</dd>
+    </dl>
+    <div class="actions">
+      <button class="btn btn-primary" id="rc-close" type="button">Berhenti dulu</button>
+      <a class="btn btn-ghost" href="/play/{{ player.id }}/summary">Lihat ringkasan</a>
+    </div>
+  </dialog>
+
+  <script>
+    const PLAYER_ID = {{ player.id }};
+    const ADMIN_FEE_PCT = {{ admin_fee_pct }};
+    const SYMBOLS = {{ symbols|tojson }};
+    const CHIPS = {{ bet_chips|tojson }};
+
+    let cash = {{ cash }};
+    let debt = {{ debt }};
+    let betLoss = {{ bet_loss }};
+    let betAmount = CHIPS[0];
+    let spinCount = 0;
+    let totalStaked = 0;
+
+    const money = (value) => "Rp" + new Intl.NumberFormat("id-ID").format(value);
+
+    const reels = [
+      document.getElementById("reel-0"),
+      document.getElementById("reel-1"),
+      document.getElementById("reel-2"),
+    ];
+    const spinButton = document.getElementById("spin");
+    const resultEl = document.getElementById("result");
+    const cashEl = document.getElementById("cash");
+    const debtEl = document.getElementById("debt");
+    const betLossEl = document.getElementById("bet-loss");
+    const betError = document.getElementById("bet-error");
+    const customInput = document.getElementById("bet-custom");
+    const dialog = document.getElementById("reality-check");
+
+    // --- Pemilih nominal taruhan -------------------------------------------
+    document.querySelectorAll("#bet-chips .chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        betAmount = Number(chip.dataset.amount);
+        customInput.value = "";
+        document.querySelectorAll("#bet-chips .chip").forEach((other) => {
+          other.setAttribute("aria-pressed", String(other === chip));
+        });
+      });
+    });
+
+    function selectedBet() {
+      const custom = Number(customInput.value);
+      return custom > 0 ? custom : betAmount;
+    }
+
+    // --- Putar slot --------------------------------------------------------
+    spinButton.addEventListener("click", async () => {
+      if (spinButton.disabled) return;
+      const amount = selectedBet();
+      if (!amount || amount <= 0) {
+        betError.textContent = "Nominal taruhan harus lebih dari 0.";
+        betError.hidden = false;
+        return;
+      }
+
+      spinButton.disabled = true;
+      betError.hidden = true;
+      resultEl.className = "result";
+      resultEl.textContent = "Memutar…";
+
+      let data;
+      try {
+        const response = await fetch(`/players/${PLAYER_ID}/bets`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount }),
+        });
+        data = await response.json();
+        if (!response.ok) {
+          betError.textContent = data.detail || "Taruhan gagal.";
+          betError.hidden = false;
+          resultEl.textContent = "Pilih nominal lalu tekan PUTAR.";
+          spinButton.disabled = false;
+          return;
+        }
+      } catch (error) {
+        betError.textContent = "Tidak dapat menghubungi server.";
+        betError.hidden = false;
+        resultEl.textContent = "Pilih nominal lalu tekan PUTAR.";
+        spinButton.disabled = false;
+        return;
+      }
+
+      animateReels(data.reels, () => finishSpin(data, amount));
+    });
+
+    function animateReels(finalReels, done) {
+      // Reel berhenti berurutan kiri ke kanan; total ±1,5 detik.
+      const stopAt = [700, 1100, 1500];
+      const start = performance.now();
+
+      function frame(now) {
+        const elapsed = now - start;
+        reels.forEach((reel, index) => {
+          if (elapsed < stopAt[index]) {
+            reel.textContent = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+          } else {
+            reel.textContent = finalReels[index];
+          }
+        });
+        if (elapsed < 1500) {
+          requestAnimationFrame(frame);
+        } else {
+          done();
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function finishSpin(data, amount) {
+      cash = data.cash;
+      debt = data.debt;
+      betLoss = data.session_bet_loss;
+      cashEl.textContent = money(cash);
+      debtEl.textContent = money(debt);
+      betLossEl.textContent = money(betLoss);
+
+      spinCount += 1;
+      totalStaked += amount;
+
+      if (data.won) {
+        resultEl.textContent = "Menang +" + money(data.net);
+        resultEl.className = "result win";
+      } else {
+        resultEl.textContent = "Kalah −" + money(data.amount);
+        resultEl.className = "result loss";
+      }
+
+      spinButton.disabled = false;
+
+      if (spinCount % 10 === 0) {
+        openRealityCheck();
+      }
+    }
+
+    function openRealityCheck() {
+      document.getElementById("rc-rounds").textContent = spinCount;
+      document.getElementById("rc-staked").textContent = money(totalStaked);
+      document.getElementById("rc-loss").textContent = money(betLoss);
+      document.getElementById("rc-debt").textContent = money(debt);
+      if (typeof dialog.showModal === "function") {
+        dialog.showModal();
+      }
+    }
+  </script>
+
+  <script>
+    // --- Pinjaman ----------------------------------------------------------
+    const loanForm = document.getElementById("loan-form");
+    const loanSelect = document.getElementById("loan-amount");
+    const loanNet = document.getElementById("loan-net");
+    const loanError = document.getElementById("loan-error");
+
+    function updateLoanPreview() {
+      const amount = Number(loanSelect.value);
+      const net = Math.round(amount * (1 - ADMIN_FEE_PCT / 100));
+      loanNet.textContent =
+        "Dana cair bersih " + money(net) + " (potongan admin " + money(amount - net) + "), utang +" + money(amount) + ".";
+    }
+    loanSelect.addEventListener("change", updateLoanPreview);
+    updateLoanPreview();
+
+    loanForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      loanError.hidden = true;
+      const response = await fetch(`/players/${PLAYER_ID}/loans`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: Number(loanSelect.value) }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        loanError.textContent = data.detail || "Pinjaman gagal.";
+        loanError.hidden = false;
+        return;
+      }
+      window.location.reload();
+    });
+
+    // --- Cicilan -----------------------------------------------------------
+    const repayForm = document.getElementById("repay-form");
+    const repayError = document.getElementById("repay-error");
+
+    repayForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      repayError.hidden = true;
+      const amount = Number(document.getElementById("repay-amount").value);
+      const response = await fetch(`/players/${PLAYER_ID}/repayments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        repayError.textContent = data.detail || "Pembayaran gagal.";
+        repayError.hidden = false;
+        return;
+      }
+      window.location.reload();
+    });
+
+    // --- Maju waktu --------------------------------------------------------
+    const advanceForm = document.getElementById("advance-form");
+    const advanceError = document.getElementById("advance-error");
+
+    advanceForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      advanceError.hidden = true;
+      const days = Number(document.getElementById("advance-days").value);
+      const response = await fetch(`/players/${PLAYER_ID}/advance-days`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ days }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        advanceError.textContent = data.detail || "Gagal memajukan waktu.";
+        advanceError.hidden = false;
+        return;
+      }
+      window.location.reload();
+    });
+
+    // --- Reset -------------------------------------------------------------
+    document.getElementById("reset").addEventListener("click", async () => {
+      if (!window.confirm("Hapus simulasi ini beserta seluruh riwayatnya?")) return;
+      await fetch(`/players/${PLAYER_ID}`, { method: "DELETE" });
+      window.location.href = "/";
+    });
+
+    document.getElementById("rc-close").addEventListener("click", () => dialog.close());
+  </script>
+</body>
+</html>

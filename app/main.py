@@ -1,14 +1,21 @@
 """Titik masuk FastAPI: endpoint JSON dan halaman HTML."""
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException, Response
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from . import config, services
 from .db import Base, engine, get_db
+from .models import Player
 from .schemas import AdvanceDaysRequest, BetRequest, LoanRequest, PlayerCreate, RepaymentRequest
+
+BASE_DIR = Path(__file__).parent
 
 
 @asynccontextmanager
@@ -19,6 +26,24 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Simulator Spiral Utang", lifespan=lifespan)
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
+
+
+def rupiah(value) -> str:
+    return "Rp" + f"{int(value):,}".replace(",", ".")
+
+
+def signed_rupiah(value) -> str:
+    value = int(value)
+    if value == 0:
+        return "—"
+    sign = "+" if value > 0 else "−"
+    return sign + "Rp" + f"{abs(value):,}".replace(",", ".")
+
+
+templates.env.filters["rupiah"] = rupiah
+templates.env.filters["signed_rupiah"] = signed_rupiah
 
 
 @app.get("/health")
@@ -115,3 +140,81 @@ def read_ledger(player_id: int, db: Session = Depends(get_db)):
 def read_summary(player_id: int, db: Session = Depends(get_db)):
     player = services.get_player(db, player_id)
     return services.summary(db, player)
+
+
+# --- Halaman HTML -----------------------------------------------------------
+def _page_404(player_id: int) -> HTMLResponse:
+    return HTMLResponse(
+        content=(
+            '<!DOCTYPE html><html lang="id"><head><meta charset="utf-8">'
+            "<title>Simulasi tidak ditemukan</title>"
+            '<link rel="stylesheet" href="/static/style.css"></head><body>'
+            '<div class="edu-banner">SIMULASI EDUKASI — TIDAK ADA UANG ASLI.</div>'
+            '<main class="narrow"><h1>Simulasi tidak ditemukan</h1>'
+            f'<p class="muted">Pemain #{player_id} tidak ada. Mungkin simulasinya sudah direset.</p>'
+            '<a class="btn btn-primary" href="/">Buat simulasi baru</a></main></body></html>'
+        ),
+        status_code=404,
+    )
+
+
+@app.get("/", response_class=HTMLResponse)
+def index(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "admin_fee_pct": config.LOAN_ADMIN_FEE_PCT,
+            "win_prob_pct": int(round(config.BET_WIN_PROB * 100)),
+            "daily_interest_pct": config.DAILY_INTEREST_PCT,
+        },
+    )
+
+
+@app.get("/play/{player_id}", response_class=HTMLResponse)
+def play_page(player_id: int, request: Request, db: Session = Depends(get_db)):
+    player = db.get(Player, player_id)
+    if player is None:
+        return _page_404(player_id)
+
+    cash, debt = services.account_totals(db, player_id)
+    entries = services.get_entries(db, player_id)
+    return templates.TemplateResponse(
+        request=request,
+        name="play.html",
+        context={
+            "player": player,
+            "cash": cash,
+            "debt": debt,
+            "bet_loss": services.total_bet_loss(db, player_id),
+            "entries": list(reversed(entries))[:20],
+            "loan_count": sum(1 for entry in entries if entry.type == "LOAN"),
+            "loan_options": sorted(config.LOAN_OPTIONS),
+            "bet_chips": [10_000, 50_000, 100_000],
+            "symbols": services.SYMBOLS,
+            "admin_fee_pct": config.LOAN_ADMIN_FEE_PCT,
+            "daily_interest_pct": config.DAILY_INTEREST_PCT,
+            "win_prob_pct": int(round(config.BET_WIN_PROB * 100)),
+            "payout_mult": config.BET_PAYOUT_MULT,
+            "max_advance_days": config.MAX_ADVANCE_DAYS,
+            "max_total_debt": config.MAX_TOTAL_DEBT,
+        },
+    )
+
+
+@app.get("/play/{player_id}/summary", response_class=HTMLResponse)
+def summary_page(player_id: int, request: Request, db: Session = Depends(get_db)):
+    player = db.get(Player, player_id)
+    if player is None:
+        return _page_404(player_id)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="summary.html",
+        context={
+            "summary": services.summary(db, player),
+            "admin_fee_pct": config.LOAN_ADMIN_FEE_PCT,
+            "daily_interest_pct": config.DAILY_INTEREST_PCT,
+            "payout_mult": config.BET_PAYOUT_MULT,
+        },
+    )

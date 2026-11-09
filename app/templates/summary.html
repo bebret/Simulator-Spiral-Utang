@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ringkasan dan Refleksi — {{ summary.nickname }}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="edu-banner">SIMULASI EDUKASI — TIDAK ADA UANG ASLI.</div>
+
+  <header class="topbar">
+    <div class="brand">Simulator Spiral Utang
+      <span class="who">/ {{ summary.nickname }}</span>
+    </div>
+    <a class="btn btn-ghost" href="/play/{{ summary.player_id }}">Kembali ke permainan</a>
+  </header>
+
+  <main>
+    <h1>Layar refleksi</h1>
+    <p class="muted">Inilah angka sebenarnya dari simulasi yang baru saja kamu jalankan.</p>
+
+    <section class="stats">
+      <div class="stat">
+        <span class="label">Saldo kas</span>
+        <span class="value">{{ summary.cash|rupiah }}</span>
+      </div>
+      <div class="stat">
+        <span class="label">Total utang</span>
+        <span class="value negative">{{ summary.debt|rupiah }}</span>
+      </div>
+      <div class="stat">
+        <span class="label">Kekayaan bersih</span>
+        <span class="value {{ 'negative' if summary.net_worth < 0 else '' }}">{{ summary.net_worth|signed_rupiah }}</span>
+      </div>
+      <div class="stat">
+        <span class="label">Total biaya admin</span>
+        <span class="value negative">{{ summary.total_fees|rupiah }}</span>
+      </div>
+      <div class="stat">
+        <span class="label">Total bunga</span>
+        <span class="value negative">{{ summary.total_interest|rupiah }}</span>
+      </div>
+      <div class="stat">
+        <span class="label">Total kerugian taruhan</span>
+        <span class="value negative">{{ summary.total_bet_loss|rupiah }}</span>
+      </div>
+      <div class="stat">
+        <span class="label">Jumlah pinjaman</span>
+        <span class="value">{{ summary.loan_count }}×</span>
+      </div>
+      <div class="stat">
+        <span class="label">Pinjaman saat sudah berutang</span>
+        <span class="value">{{ summary.loans_taken_while_in_debt }}×</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Grafik saldo vs utang</h2>
+      <div class="chart-box">
+        <canvas id="chart" aria-label="Grafik saldo kas dan total utang" role="img"></canvas>
+      </div>
+      <p class="muted small" id="chart-fallback" hidden>
+        Grafik tidak dapat dimuat (CDN tidak terjangkau). Seluruh angka tetap tersedia di
+        atas dan di tabel riwayat.
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2>Matematika yang sebenarnya</h2>
+      <p>
+        Peluang menang taruhan adalah <strong>{{ (summary.win_probability * 100)|round|int }}%</strong>
+        dengan pengali <strong>{{ payout_mult|int }}×</strong>. Maka nilai harapan setiap taruhan:
+      </p>
+      <p class="small" style="font-family: ui-monospace, monospace;">
+        {{ (summary.win_probability * 100)|round|int }}% × {{ payout_mult|int }} = {{ (summary.win_probability * payout_mult * 100)|round|int }}%
+        &nbsp;→&nbsp; {{ (summary.win_probability * payout_mult * 100)|round|int }}% − 100% =
+        <strong>{{ (summary.expected_value_per_bet * 100)|round|int }}%</strong>
+      </p>
+      <p>
+        Artinya rata-rata <strong>setiap {{ 100000|rupiah }} taruhan kembali
+        {{ ((1 + summary.expected_value_per_bet) * 100000)|round|int|rupiah }}</strong>.
+        Semakin lama bermain, semakin pasti hasilnya mendekati kerugian itu.
+      </p>
+      <p class="muted small">
+        Mesin slot asli sering memakai suara, kilau, dan rekayasa “hampir menang” untuk
+        memperkuat dorongan bermain. Karena itu rasa “hampir menang” tidak mencerminkan
+        peluang sebenarnya — di simulasi ini pun kombinasi hampir menang hanya muncul acak,
+        bukan dirancang.
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2>Bunga yang menumpuk</h2>
+      <p>
+        Simulasi memakai bunga <strong>{{ daily_interest_pct|round(1) }}% per hari</strong> dari
+        total utang berjalan. Bunga yang tidak dibayar ikut berbunga pada hari berikutnya
+        (bunga berbunga). Biaya admin
+        <strong>{{ admin_fee_pct|round|int }}%</strong> juga dipotong di depan, sehingga uang
+        yang benar-benar kamu terima selalu lebih kecil daripada utang yang harus dibayar.
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2>Butuh bantuan?</h2>
+      <p class="small">
+        Simulasi ini tidak menawarkan pinjaman atau taruhan. Jika kamu atau orang di
+        sekitarmu mengalami kesulitan keuangan karena pinjol atau judi online:
+      </p>
+      <ul class="small muted" style="margin:0 0 10px; padding-left:18px;">
+        <li>Hentikan pinjaman baru dan jangan menutup utang dengan utang lain.</li>
+        <li>Catat semua utang dan ceritakan ke orang yang kamu percaya.</li>
+        <li>Gunakan layanan konseling kampus atau psikolog untuk tekanan emosional.</li>
+        <li>Laporkan pinjol ilegal dan situs judi ke kanal pengaduan OJK
+          (kontak resmi: 157 / ojk.go.id — periksa kembali nomor terbaru di situs resmi).</li>
+      </ul>
+      <p class="muted small">Seluruh data di aplikasi ini fiktif dan tidak terkait layanan keuangan mana pun.</p>
+    </section>
+
+    <div class="actions" style="margin-bottom:24px;">
+      <a class="btn btn-ghost" href="/play/{{ summary.player_id }}">Kembali ke permainan</a>
+      <button class="btn btn-danger" id="reset" type="button">Reset simulasi</button>
+    </div>
+
+    <p class="footer-note">
+      Simulator Spiral Utang — alat literasi keuangan. Dibuat untuk memperlihatkan
+      mekanisme biaya, bunga, dan nilai harapan taruhan; bukan untuk mempromosikan judi
+      atau pinjaman.
+    </p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    const SERIES = {{ summary.series|tojson }};
+    const PLAYER_ID = {{ summary.player_id }};
+
+    if (typeof Chart === "undefined") {
+      document.getElementById("chart-fallback").hidden = false;
+    } else {
+      const labels = SERIES.map((point) => point.t);
+      new Chart(document.getElementById("chart"), {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Saldo kas",
+              data: SERIES.map((point) => point.cash),
+              borderColor: "#2f3a46",
+              backgroundColor: "rgba(47, 58, 70, 0.08)",
+              borderWidth: 2,
+              pointRadius: 2,
+              tension: 0.2,
+            },
+            {
+              label: "Total utang",
+              data: SERIES.map((point) => point.debt),
+              borderColor: "#96271f",
+              backgroundColor: "rgba(150, 39, 31, 0.08)",
+              borderWidth: 2,
+              pointRadius: 2,
+              tension: 0.2,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          interaction: { mode: "index", intersect: false },
+          scales: {
+            y: {
+              ticks: {
+                callback: (value) => "Rp" + new Intl.NumberFormat("id-ID").format(value),
+              },
+            },
+            x: { title: { display: true, text: "Urutan transaksi" } },
+          },
+          plugins: {
+            legend: { position: "bottom" },
+            tooltip: {
+              callbacks: {
+                title: (items) => {
+                  const point = SERIES[items[0].dataIndex];
+                  return "Transaksi #" + point.t + " (" + point.label + ")";
+                },
+                label: (item) =>
+                  item.dataset.label + ": Rp" + new Intl.NumberFormat("id-ID").format(item.parsed.y),
+              },
+            },
+          },
+        },
+      });
+    }
+
+    document.getElementById("reset").addEventListener("click", async () => {
+      if (!window.confirm("Hapus simulasi ini beserta seluruh riwayatnya?")) return;
+      await fetch(`/players/${PLAYER_ID}`, { method: "DELETE" });
+      window.location.href = "/";
+    });
+  </script>
+</body>
+</html>

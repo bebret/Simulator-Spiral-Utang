@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulator Spiral Utang — Literasi Keuangan</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="edu-banner">SIMULASI EDUKASI — TIDAK ADA UANG ASLI.</div>
+
+  <main class="narrow">
+    <h1>Simulator Spiral Utang</h1>
+    <p>Alat literasi keuangan untuk merasakan sendiri bagaimana pinjaman berbunga
+      tinggi dan taruhan online saling memperparah kerugian. Semua uang di sini
+      <strong>fiktif</strong>.</p>
+
+    <div class="panel">
+      <h2>Mulai simulasi</h2>
+      <p class="muted">Cukup nickname. Tanpa password, tanpa data pribadi, tanpa uang asli.</p>
+      <form id="player-form">
+        <label for="nickname">Nickname (1–30 karakter)</label>
+        <input id="nickname" name="nickname" maxlength="30" required
+               placeholder="mis. mahasiswa_01" autocomplete="off">
+        <button class="btn btn-primary" type="submit">Buat simulasi</button>
+      </form>
+      <p id="form-error" class="error" hidden></p>
+    </div>
+
+    <div class="panel">
+      <h2>Cara kerja simulasi</h2>
+      <ol class="muted small" style="margin:0; padding-left:18px;">
+        <li>Ajukan pinjaman. Biaya admin {{ admin_fee_pct|round|int }}% dipotong
+          <em>di depan</em>, tetapi utang tetap sebesar pokok penuh.</li>
+        <li>Putar slot simulasi. Peluang menang asli {{ win_prob_pct }}% dan pengali 2×.</li>
+        <li>Maju beberapa hari dan lihat bunga {{ daily_interest_pct|round(1) }}%/hari
+          menumpuk (bunga berbunga).</li>
+        <li>Buka layar refleksi untuk melihat total biaya, total kerugian, dan grafik
+          saldo vs utang.</li>
+      </ol>
+    </div>
+
+    <p class="footer-note">Data disimpan di database simulasi dan dihapus permanen
+      saat simulasi direset. Tidak ada merek, tautan, atau layanan keuangan asli di
+      aplikasi ini.</p>
+  </main>
+
+  <script>
+    const form = document.getElementById("player-form");
+    const errorBox = document.getElementById("form-error");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorBox.hidden = true;
+      const nickname = document.getElementById("nickname").value.trim();
+      if (!nickname) {
+        errorBox.textContent = "Nickname tidak boleh kosong.";
+        errorBox.hidden = false;
+        return;
+      }
+
+      const response = await fetch("/players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nickname }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        errorBox.textContent = data.detail || "Gagal membuat simulasi.";
+        errorBox.hidden = false;
+        return;
+      }
+
+      const player = await response.json();
+      window.location.href = "/play/" + player.id;
+    });
+  </script>
+</body>
+</html>
