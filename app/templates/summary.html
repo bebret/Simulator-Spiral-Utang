@@ -55,7 +55,7 @@
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel panel-chart">
       <h2>Grafik saldo vs utang</h2>
       <div class="chart-box">
         <canvas id="chart" aria-label="Grafik saldo kas dan total utang" role="img"></canvas>
@@ -66,7 +66,7 @@
       </p>
     </section>
 
-    <section class="panel">
+    <section class="panel panel-math">
       <h2>Matematika yang sebenarnya</h2>
       <p>
         Peluang menang taruhan adalah <strong>{{ (summary.win_probability * 100)|round|int }}%</strong>
@@ -101,7 +101,7 @@
       </p>
     </section>
 
-    <section class="panel">
+    <section class="panel panel-help">
       <h2>Butuh bantuan?</h2>
       <p class="small">
         Simulasi ini tidak menawarkan pinjaman atau taruhan. Jika kamu atau orang di
@@ -146,8 +146,8 @@
             {
               label: "Saldo kas",
               data: SERIES.map((point) => point.cash),
-              borderColor: "#2f3a46",
-              backgroundColor: "rgba(47, 58, 70, 0.08)",
+              borderColor: "#146b5c",
+              backgroundColor: "rgba(20, 107, 92, 0.08)",
               borderWidth: 2,
               pointRadius: 2,
               tension: 0.2,
@@ -155,8 +155,8 @@
             {
               label: "Total utang",
               data: SERIES.map((point) => point.debt),
-              borderColor: "#96271f",
-              backgroundColor: "rgba(150, 39, 31, 0.08)",
+              borderColor: "#a8432f",
+              backgroundColor: "rgba(168, 67, 47, 0.08)",
               borderWidth: 2,
               pointRadius: 2,
               tension: 0.2,

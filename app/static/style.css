@@ -1,42 +1,82 @@
-/* Gaya sederhana, warna netral. Tanpa animasi perayaan atau efek suara. */
+/* =========================================================================
+   Simulator Spiral Utang — sistem warna & tampilan
+   Palet "kertas & tinta": kanvas hangat, aksi utama pine, utang brick,
+   taruhan ochre, pinjaman plum. Warna dipakai sesuai peran, bukan hiasan.
+   Tanpa animasi perayaan, tanpa efek kilau.
+   ========================================================================= */
 
 :root {
-  --bg: #f5f6f8;
-  --panel: #ffffff;
-  --ink: #1a1d21;
-  --muted: #5f6b7a;
-  --line: #dfe3e8;
-  --accent: #2f3a46;
-  --accent-hover: #3b4856;
-  --negative: #96271f;
-  --positive: #1f6f43;
-  --warning-bg: #fdf3e3;
-  --warning-line: #d8b475;
+  /* Netral (ditint hangat, bukan abu-abu mati) */
+  --ink: oklch(0.25 0.02 70);
+  --ink-soft: oklch(0.38 0.02 70);
+  --muted: oklch(0.46 0.02 70);
+  --line: oklch(0.90 0.012 80);
+  --line-strong: oklch(0.84 0.016 80);
+  --canvas: oklch(0.972 0.008 85);
+  --surface: oklch(0.997 0.002 85);
+  --surface-sunken: oklch(0.955 0.012 85);
+
+  /* Peran warna */
+  --pine-700: oklch(0.34 0.055 175);
+  --pine-600: oklch(0.42 0.07 175);
+  --pine-500: oklch(0.52 0.08 175);
+  --pine-100: oklch(0.95 0.025 175);
+
+  --brick-700: oklch(0.40 0.14 27);
+  --brick-600: oklch(0.47 0.15 27);
+  --brick-100: oklch(0.96 0.02 27);
+
+  --ochre-700: oklch(0.50 0.10 70);
+  --ochre-600: oklch(0.62 0.12 72);
+  --ochre-100: oklch(0.96 0.035 80);
+
+  --plum-700: oklch(0.36 0.08 330);
+  --plum-600: oklch(0.44 0.09 330);
+  --plum-100: oklch(0.95 0.025 330);
+
+  --focus: oklch(0.44 0.09 330);
+
+  --shadow-sm: 0 1px 2px oklch(0.25 0.02 70 / 0.05);
+  --shadow-md: 0 6px 18px -8px oklch(0.25 0.02 70 / 0.18);
+
+  --radius: 14px;
 }
 
 * {
   box-sizing: border-box;
 }
 
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  line-height: 1.5;
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.55;
+  font-size: 16px;
+}
+
+::selection {
+  background: var(--ochre-100);
+  color: var(--ink);
+}
+
+/* Banner edukasi: selalu terlihat, tegas, tidak mencolok */
 .edu-banner {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: var(--ink);
+  background: linear-gradient(90deg, var(--pine-700), var(--pine-600) 58%, var(--plum-700));
   color: #fff;
   text-align: center;
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  font-weight: 600;
-  padding: 8px 12px;
+  font-size: 0.76rem;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  padding: 9px 12px;
+  box-shadow: 0 2px 10px -6px oklch(0.25 0.02 70 / 0.5);
 }
 
 .topbar {
@@ -45,46 +85,75 @@ body {
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  max-width: 1040px;
+  max-width: 1060px;
   margin: 0 auto;
-  padding: 18px 16px 0;
+  padding: 20px 16px 0;
 }
 
 .topbar .brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   font-weight: 700;
   font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.topbar .brand::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: linear-gradient(135deg, var(--pine-600), var(--plum-600));
 }
 
 .topbar .who {
   color: var(--muted);
-  font-weight: 400;
+  font-weight: 500;
 }
 
 main {
-  max-width: 1040px;
+  max-width: 1060px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 18px 16px 40px;
 }
 
 main.narrow {
-  max-width: 720px;
+  max-width: 740px;
 }
 
 h1 {
-  font-size: 1.6rem;
-  margin: 8px 0 6px;
+  font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.2rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 8px 0 8px;
 }
 
 h2 {
-  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.85rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin: 0 0 10px;
-  color: var(--accent);
+  letter-spacing: 0.08em;
+  margin: 0 0 12px;
+  color: var(--ink-soft);
+}
+
+h2::before {
+  content: "";
+  width: 4px;
+  height: 15px;
+  border-radius: 2px;
+  background: var(--panel-accent, var(--pine-500));
 }
 
 p {
   margin: 0 0 10px;
+}
+
+a {
+  color: var(--pine-700);
 }
 
 .muted {
@@ -96,12 +165,43 @@ p {
   font-size: 0.82rem;
 }
 
+.negative {
+  color: var(--brick-600);
+}
+
+.positive {
+  color: var(--pine-600);
+}
+
+/* Panel: permukaan tinta-di-atas-kertas dengan aksen per peran */
 .panel {
-  background: var(--panel);
+  --panel-accent: var(--pine-500);
+  background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 18px;
+  border-radius: var(--radius);
+  padding: 20px;
   margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-slot {
+  --panel-accent: var(--pine-500);
+}
+
+.panel-loan {
+  --panel-accent: var(--plum-600);
+}
+
+.panel-chart {
+  --panel-accent: var(--pine-600);
+}
+
+.panel-math {
+  --panel-accent: var(--ochre-600);
+}
+
+.panel-help {
+  --panel-accent: var(--plum-600);
 }
 
 .panel-head {
@@ -109,17 +209,11 @@ p {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .panel-head h2 {
   margin: 0;
-}
-
-.btn-small {
-  padding: 6px 12px;
-  font-size: 0.8rem;
-  font-weight: 600;
 }
 
 .grid {
@@ -130,83 +224,185 @@ p {
 
 @media (min-width: 880px) {
   .grid.two {
-    grid-template-columns: 1.1fr 1fr;
+    grid-template-columns: 1.05fr 1fr;
+    align-items: start;
   }
 }
 
-/* Ticker selalu terlihat */
+/* ---------------------------------------------------------------- Hero -- */
+.hero {
+  background:
+    radial-gradient(120% 130% at 0% 0%, var(--pine-100), transparent 55%),
+    radial-gradient(110% 120% at 100% 0%, var(--plum-100), transparent 50%),
+    var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 26px 22px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.hero h1 {
+  margin-top: 6px;
+}
+
+.hero p {
+  max-width: 60ch;
+  color: var(--ink-soft);
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--pine-700);
+  background: var(--pine-100);
+  border-radius: 999px;
+  padding: 4px 10px;
+  margin-bottom: 4px;
+}
+
+/* Langkah bernomor */
+ol.steps {
+  counter-reset: step;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+ol.steps li {
+  counter-increment: step;
+  position: relative;
+  padding-left: 34px;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+ol.steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 23px;
+  height: 23px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--pine-600);
+}
+
+ol.steps li:nth-child(2)::before {
+  background: var(--ochre-600);
+}
+
+ol.steps li:nth-child(3)::before {
+  background: var(--plum-600);
+}
+
+ol.steps li:nth-child(4)::before {
+  background: var(--brick-600);
+}
+
+/* -------------------------------------------------------------- Ticker -- */
 .ticker {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  overflow: hidden;
+  gap: 10px;
   margin-bottom: 16px;
 }
 
 .ticker-item {
-  background: var(--panel);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--ticker-accent, var(--pine-500));
+  border-radius: 12px;
   padding: 12px 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.ticker-item:nth-child(1) {
+  --ticker-accent: var(--pine-500);
+  background: linear-gradient(180deg, var(--pine-100), var(--surface) 70%);
+}
+
+.ticker-item:nth-child(2) {
+  --ticker-accent: var(--brick-600);
+  background: linear-gradient(180deg, var(--brick-100), var(--surface) 70%);
+}
+
+.ticker-item:nth-child(3) {
+  --ticker-accent: var(--ochre-600);
+  background: linear-gradient(180deg, var(--ochre-100), var(--surface) 70%);
 }
 
 .ticker-item .label {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--muted);
+  margin-bottom: 2px;
 }
 
 .ticker-item .value {
   font-size: 1.15rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
-.negative {
-  color: var(--negative);
-}
-
-.positive {
-  color: var(--positive);
-}
-
-/* Slot */
+/* ---------------------------------------------------------------- Slot -- */
 .reels {
   display: flex;
   gap: 12px;
   justify-content: center;
-  margin: 14px 0 10px;
+  margin: 16px 0 12px;
 }
 
 .reel {
-  width: 92px;
-  height: 92px;
+  width: 94px;
+  height: 94px;
   display: grid;
   place-items: center;
   font-size: 2.6rem;
   font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
-  background: #fbfbfc;
-  border: 2px solid var(--line);
-  border-radius: 10px;
+  background: var(--surface-sunken);
+  border: 2px solid var(--line-strong);
+  border-radius: 12px;
+  color: var(--pine-700);
   user-select: none;
+  box-shadow: inset 0 2px 6px oklch(0.25 0.02 70 / 0.06);
+}
+
+.reel:nth-child(2) {
+  color: var(--ochre-700);
+}
+
+.reel:nth-child(3) {
+  color: var(--plum-600);
 }
 
 .result {
   text-align: center;
-  font-weight: 600;
+  font-weight: 700;
   min-height: 1.4em;
-  margin: 0 0 12px;
+  margin: 0 0 14px;
+  font-variant-numeric: tabular-nums;
 }
 
 .result.win {
-  color: var(--positive);
+  color: var(--pine-600);
 }
 
 .result.loss {
-  color: var(--negative);
+  color: var(--brick-600);
 }
 
 .chips {
@@ -217,47 +413,74 @@ p {
 }
 
 .chip {
-  border: 1px solid var(--line);
-  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
   border-radius: 999px;
   padding: 7px 14px;
   font: inherit;
   font-size: 0.88rem;
+  font-weight: 600;
   cursor: pointer;
-  color: var(--ink);
+  color: var(--ink-soft);
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.chip:hover {
+  background: var(--pine-100);
+  border-color: var(--pine-500);
 }
 
 .chip[aria-pressed="true"] {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--pine-600);
+  border-color: var(--pine-600);
   color: #fff;
 }
 
-/* Form */
+/* ---------------------------------------------------------------- Form -- */
 label {
   display: block;
-  font-size: 0.82rem;
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-bottom: 5px;
+  color: var(--ink-soft);
 }
 
 input,
 select {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  padding: 11px 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
   font: inherit;
-  background: #fff;
+  font-size: 1rem;
+  background: var(--surface);
   color: var(--ink);
-  margin-bottom: 10px;
+  margin-bottom: 11px;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+input::placeholder {
+  color: oklch(0.58 0.015 70);
+}
+
+input:hover,
+select:hover {
+  border-color: var(--pine-500);
 }
 
 input:focus,
-select:focus,
-button:focus-visible {
-  outline: 2px solid #8ea2b8;
+select:focus {
+  outline: none;
+  border-color: var(--pine-600);
+  box-shadow: 0 0 0 3px oklch(0.52 0.08 175 / 0.22);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
@@ -271,59 +494,71 @@ button:focus-visible {
   margin-bottom: 0;
 }
 
-/* Tombol */
+/* ------------------------------------------------------------- Tombol -- */
 .btn {
   display: inline-block;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 11px 18px;
   font: inherit;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
   text-decoration: none;
   text-align: center;
-  background: #e8ebef;
+  background: var(--surface-sunken);
   color: var(--ink);
+  transition: background-color 120ms ease, border-color 120ms ease, transform 80ms ease;
 }
 
 .btn:hover {
-  background: #dde2e8;
+  background: oklch(0.93 0.015 80);
+}
+
+.btn:active {
+  transform: translateY(1px);
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--pine-600);
   color: #fff;
 }
 
 .btn-primary:hover {
-  background: var(--accent-hover);
+  background: var(--pine-700);
 }
 
 .btn-ghost {
   background: transparent;
-  border-color: var(--line);
-  color: var(--accent);
+  border-color: var(--line-strong);
+  color: var(--pine-700);
 }
 
 .btn-ghost:hover {
-  background: #eef1f4;
+  background: var(--pine-100);
+  border-color: var(--pine-500);
 }
 
 .btn-danger {
   background: transparent;
-  border-color: #d6b4b0;
-  color: var(--negative);
+  border-color: oklch(0.78 0.06 27);
+  color: var(--brick-700);
 }
 
 .btn-danger:hover {
-  background: #f9efee;
+  background: var(--brick-100);
+  border-color: var(--brick-600);
 }
 
 .btn-wide {
   width: 100%;
   padding: 15px;
-  font-size: 1.05rem;
-  letter-spacing: 0.05em;
+  font-size: 1.02rem;
+  letter-spacing: 0.06em;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 0.8rem;
 }
 
 .btn[disabled] {
@@ -332,39 +567,48 @@ button:focus-visible {
 }
 
 .btn[aria-pressed="true"] {
-  background: #e8ebef;
-  border-color: #c6ced8;
+  background: var(--plum-100);
+  border-color: var(--plum-600);
+  color: var(--plum-700);
 }
 
 button.link {
   background: none;
   border: none;
   padding: 0;
-  color: var(--accent);
+  color: var(--pine-700);
   text-decoration: underline;
   cursor: pointer;
   font: inherit;
 }
 
-/* Pesan */
+/* -------------------------------------------------------------- Pesan -- */
 .error {
-  color: var(--negative);
-  font-size: 0.88rem;
-  margin: 8px 0 0;
+  color: var(--brick-700);
+  background: var(--brick-100);
+  border: 1px solid oklch(0.88 0.05 27);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.86rem;
+  margin: 10px 0 0;
 }
 
 .warning {
-  background: var(--warning-bg);
-  border: 1px solid var(--warning-line);
+  background: var(--ochre-100);
+  border: 1px solid oklch(0.86 0.07 80);
+  border-left: 4px solid var(--ochre-600);
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 0.88rem;
   margin-bottom: 12px;
+  color: oklch(0.36 0.05 70);
 }
 
-/* Tabel */
+/* -------------------------------------------------------------- Tabel -- */
 .table-wrap {
   overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }
 
 table {
@@ -376,16 +620,25 @@ table {
 th,
 td {
   text-align: left;
-  padding: 8px 10px;
+  padding: 9px 12px;
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
 
+tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:nth-child(even) {
+  background: oklch(0.975 0.008 85);
+}
+
 th {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted);
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  background: var(--surface-sunken);
 }
 
 td.num {
@@ -393,33 +646,66 @@ td.num {
   font-variant-numeric: tabular-nums;
 }
 
-/* Statistik ringkasan */
+/* ---------------------------------------------------------- Statistik -- */
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
 
 .stat {
+  --stat-accent: var(--pine-500);
+  background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 12px 14px;
-  background: var(--panel);
+  border-left: 4px solid var(--stat-accent);
+  border-radius: 12px;
+  padding: 13px 15px;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat:nth-child(2) {
+  --stat-accent: var(--brick-600);
+}
+
+.stat:nth-child(3) {
+  --stat-accent: var(--plum-600);
+}
+
+.stat:nth-child(4) {
+  --stat-accent: var(--ochre-600);
+}
+
+.stat:nth-child(5) {
+  --stat-accent: var(--brick-600);
+}
+
+.stat:nth-child(6) {
+  --stat-accent: var(--ochre-600);
+}
+
+.stat:nth-child(7) {
+  --stat-accent: var(--plum-600);
+}
+
+.stat:nth-child(8) {
+  --stat-accent: var(--pine-500);
 }
 
 .stat .label {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   color: var(--muted);
+  margin-bottom: 3px;
 }
 
 .stat .value {
-  font-size: 1.1rem;
+  font-size: 1.08rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 .chart-box {
@@ -427,49 +713,56 @@ td.num {
   height: 300px;
 }
 
+/* ------------------------------------------------------------- Footer -- */
 .footer-note {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   border-top: 1px solid var(--line);
-  padding-top: 12px;
-  margin-top: 20px;
+  padding-top: 14px;
+  margin-top: 24px;
+  max-width: 70ch;
 }
 
-/* Dialog reality check */
+/* ------------------------------------------------------------- Dialog -- */
 dialog {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 22px;
-  max-width: 420px;
+  border: 1px solid var(--line-strong);
+  border-top: 4px solid var(--ochre-600);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 430px;
   width: calc(100% - 32px);
-  background: var(--panel);
+  background: var(--surface);
   color: var(--ink);
+  box-shadow: 0 24px 48px -24px oklch(0.25 0.02 70 / 0.45);
 }
 
 dialog::backdrop {
-  background: rgba(20, 24, 28, 0.45);
+  background: oklch(0.25 0.02 70 / 0.45);
 }
 
 dialog h2 {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 dl.kv {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 6px 12px;
+  gap: 7px 12px;
   margin: 0 0 16px;
   font-size: 0.9rem;
+  background: var(--ochre-100);
+  border-radius: 10px;
+  padding: 12px 14px;
 }
 
 dl.kv dt {
-  color: var(--muted);
+  color: var(--ink-soft);
 }
 
 dl.kv dd {
   margin: 0;
   text-align: right;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -477,4 +770,32 @@ dl.kv dd {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------ Aksesibilitas -- */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .ticker {
+    grid-template-columns: 1fr;
+  }
+
+  .reel {
+    width: 82px;
+    height: 82px;
+    font-size: 2.2rem;
+  }
+
+  main {
+    padding: 14px 12px 32px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
 }
