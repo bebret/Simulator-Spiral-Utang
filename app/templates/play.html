@@ -90,12 +90,14 @@
         <hr style="border:none;border-top:1px solid var(--line);margin:18px 0;">
 
         <h2>Bayar cicilan</h2>
+        <p class="muted small">Nominal bebas — berapa pun selama saldo kas cukup.</p>
         <form id="repay-form" class="inline-form">
-          <input id="repay-amount" type="number" min="1" step="1000"
+          <input id="repay-amount" type="number" min="1" step="1"
                  placeholder="Nominal cicilan (Rp)" required>
           <button class="btn btn-ghost" type="submit">Bayar</button>
         </form>
         <p class="error" id="repay-error" hidden></p>
+        <p class="muted small" id="repay-note" hidden></p>
 
         <hr style="border:none;border-top:1px solid var(--line);margin:18px 0;">
 
@@ -359,6 +361,14 @@
     // --- Cicilan -----------------------------------------------------------
     const repayForm = document.getElementById("repay-form");
     const repayError = document.getElementById("repay-error");
+    const repayNote = document.getElementById("repay-note");
+
+    const savedRepayNote = sessionStorage.getItem("repayNote");
+    if (savedRepayNote) {
+      repayNote.textContent = savedRepayNote;
+      repayNote.hidden = false;
+      sessionStorage.removeItem("repayNote");
+    }
 
     repayForm.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -369,11 +379,17 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount }),
       });
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
         repayError.textContent = data.detail || "Pembayaran gagal.";
         repayError.hidden = false;
         return;
+      }
+      if (data.amount < amount) {
+        sessionStorage.setItem(
+          "repayNote",
+          "Sisa utang hanya " + money(data.amount) + ", jadi hanya itu yang dipotong dari saldo."
+        );
       }
       window.location.reload();
     });

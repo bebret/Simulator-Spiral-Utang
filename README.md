@@ -147,6 +147,10 @@ Saldo kas dan utang **tidak** disimpan sebagai kolom: keduanya dijumlahkan dari
 | Taruhan | `BET` kas −nominal; jika menang `WIN` kas +nominal×2 |
 | Cicilan | `REPAY` kas −nominal, utang −nominal |
 
+Cicilan menerima **nominal bebas** selama saldo kas cukup. Bila nominal yang
+diketik melebihi sisa utang, hanya sebesar sisa utang yang dipotong dari saldo —
+kelebihan tidak hangus.
+
 Tabel dibuat saat startup dengan `Base.metadata.create_all`. Ini cukup untuk
 proyek satu tabel kecil dan idempoten: saat container `app` dijalankan ulang,
 tabel yang sudah ada tidak dibuat lagi, dan datanya tetap ada karena disimpan

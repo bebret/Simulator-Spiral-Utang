@@ -185,19 +185,38 @@ def place_bet(db: Session, player: Player, amount: int) -> dict:
 
 
 def repay(db: Session, player: Player, amount: int) -> dict:
+    """Cicilan bebas nominal: selama saldo cukup, nominal apa pun diterima.
+
+    Bila nominal melebihi sisa utang, hanya sebesar sisa utang yang dipotong
+    dari saldo — kelebihan tidak hangus.
+    """
     cash, debt = account_totals(db, player.id)
-    limit = min(cash, debt)
-    if amount > limit:
+    if debt <= 0:
+        raise HTTPException(status_code=400, detail="Tidak ada utang yang perlu dibayar")
+    if amount > cash:
         raise HTTPException(
             status_code=400,
-            detail=f"Nominal melebihi saldo atau utang (maksimal {_rupiah(limit)})",
+            detail=f"Saldo kas tidak cukup (tersedia {_rupiah(cash)})",
         )
 
-    add_entry(db, player.id, "REPAY", cash_delta=-amount, debt_delta=-amount, note="Bayar cicilan")
+    applied = min(amount, debt)
+    add_entry(
+        db,
+        player.id,
+        "REPAY",
+        cash_delta=-applied,
+        debt_delta=-applied,
+        note="Bayar cicilan" if applied == amount else "Pelunasan sisa utang",
+    )
     db.commit()
 
     new_cash, new_debt = account_totals(db, player.id)
-    return {"amount": amount, "cash": new_cash, "debt": new_debt}
+    return {
+        "requested": amount,
+        "amount": applied,
+        "cash": new_cash,
+        "debt": new_debt,
+    }
 
 
 def advance_days(db: Session, player: Player, days: int) -> dict:
