@@ -1,0 +1,27 @@
+# Konteks build dibuat sekecil mungkin agar build cepat dan tidak ada
+# file sensitif yang ikut terkirim ke Docker daemon.
+
+.git
+.gitignore
+
+# Secret tidak boleh masuk ke image
+.env
+
+# Artefak Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.sqlite3
+
+# Tidak dibutuhkan di dalam image
+tests/
+scripts/
+screenshots/
+*.md
+
+# File orkestrasi dan dokumentasi container
+Dockerfile
+.dockerignore
+docker-compose.yml
