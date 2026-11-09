@@ -34,7 +34,11 @@
 
     <div class="grid two">
       <section class="panel">
-        <h2>Simulasi taruhan</h2>
+        <div class="panel-head">
+          <h2>Simulasi taruhan</h2>
+          <button class="btn btn-ghost btn-small" id="sound-toggle" type="button"
+                  aria-pressed="false">Suara: mati</button>
+        </div>
         <p class="muted small">Tiga reel, peluang menang {{ win_prob_pct }}%,
           pengali {{ payout_mult|int }}×. Hasil ditentukan server.</p>
 
@@ -208,6 +212,53 @@
     const customInput = document.getElementById("bet-custom");
     const dialog = document.getElementById("reality-check");
 
+    // --- Suara klik reel (default mati) ------------------------------------
+    // Dibuat dengan WebAudio: tanpa file audio, tanpa suara kemenangan.
+    const soundButton = document.getElementById("sound-toggle");
+    let soundOn = sessionStorage.getItem("slotSound") === "on";
+    let audioCtx = null;
+
+    function renderSoundButton() {
+      soundButton.textContent = soundOn ? "Suara: nyala" : "Suara: mati";
+      soundButton.setAttribute("aria-pressed", String(soundOn));
+    }
+
+    function ensureAudio() {
+      if (!audioCtx) {
+        const AudioCtor = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtor) return null;
+        audioCtx = new AudioCtor();
+      }
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
+    }
+
+    // Klik mekanis pendek: satu nada rendah yang cepat meredup.
+    function playClick() {
+      if (!soundOn) return;
+      const ctx = ensureAudio();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "square";
+      osc.frequency.setValueAtTime(170, now);
+      osc.frequency.exponentialRampToValueAtTime(85, now + 0.05);
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.07);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.08);
+    }
+
+    soundButton.addEventListener("click", () => {
+      soundOn = !soundOn;
+      sessionStorage.setItem("slotSound", soundOn ? "on" : "off");
+      renderSoundButton();
+      playClick();
+    });
+    renderSoundButton();
+
     // --- Pemilih nominal taruhan -------------------------------------------
     document.querySelectorAll("#bet-chips .chip").forEach((chip) => {
       chip.addEventListener("click", () => {
@@ -238,6 +289,9 @@
       betError.hidden = true;
       resultEl.className = "result";
       resultEl.textContent = "Memutar…";
+      reels.forEach((reel) => {
+        reel.dataset.stopped = "false";
+      });
 
       let data;
       try {
@@ -277,6 +331,11 @@
             reel.textContent = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
           } else {
             reel.textContent = finalReels[index];
+            // Satu klik saat tiap reel berhenti, hanya jika suara dinyalakan.
+            if (reel.dataset.stopped !== "true") {
+              reel.dataset.stopped = "true";
+              playClick();
+            }
           }
         });
         if (elapsed < 1500) {

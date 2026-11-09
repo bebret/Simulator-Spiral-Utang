@@ -17,8 +17,13 @@ tariknya:
 - Bunga harian **berbunga** (bunga yang belum dibayar ikut menghasilkan bunga).
 - Taruhan punya **nilai harapan negatif**; peluang menang dan matematikanya
   ditampilkan terbuka di layar refleksi.
-- Permainan slot boleh beranimasi, tetapi **tanpa suara, tanpa konfeti, tanpa
-  kilau, tanpa getar, tanpa teks perayaan, dan tanpa near-miss yang direkayasa**.
+- Permainan slot boleh beranimasi, tetapi **tanpa konfeti, tanpa kilau, tanpa
+  getar, tanpa teks perayaan, dan tanpa near-miss yang direkayasa**.
+- Suara **tidak berbunyi secara default**. Ada toggle "Suara: nyala" yang
+  memainkan klik mekanis netral saat tiap reel berhenti — tanpa suara
+  kemenangan, tanpa file audio (dibuat dengan WebAudio). Ini **penyimpangan
+  sadar** dari bagian 8b `PROJECT_SPEC.md` yang meminta "tanpa suara"; default
+  aplikasi tetap senyap.
 - Pengguna mendapat **reality check setiap 10 putaran** (jumlah putaran, total
   taruhan, total kerugian, sisa utang).
 - Layar refleksi menjelaskan bahwa mesin slot asli memakai suara dan near-miss

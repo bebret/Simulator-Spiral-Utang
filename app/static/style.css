@@ -104,6 +104,24 @@ p {
   margin-bottom: 16px;
 }
 
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.panel-head h2 {
+  margin: 0;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 .grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -311,6 +329,11 @@ button:focus-visible {
 .btn[disabled] {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.btn[aria-pressed="true"] {
+  background: #e8ebef;
+  border-color: #c6ced8;
 }
 
 button.link {
