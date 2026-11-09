@@ -83,8 +83,8 @@ flowchart LR
 Prasyarat: Docker Engine / Docker Desktop dengan Compose v2.
 
 ```bash
-git clone <url-repo-ini>
-cd <folder-repo>
+git clone https://github.com/bebret/Simulator-Spiral-Utang.git
+cd Simulator-Spiral-Utang
 cp .env.example .env      # Windows: copy .env.example .env
 docker compose up -d --build
 ```
