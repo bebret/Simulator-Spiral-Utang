@@ -17,6 +17,10 @@ from .models import LedgerEntry, Player
 SYMBOLS = ["7", "★", "◆", "●", "▲"]
 
 
+def _rupiah(value: int) -> str:
+    return "Rp" + f"{int(value):,}".replace(",", ".")
+
+
 # --- Helper dasar -----------------------------------------------------------
 def get_player(db: Session, player_id: int) -> Player:
     player = db.get(Player, player_id)
@@ -52,6 +56,9 @@ def add_entry(
             note=note,
         )
     )
+    # Flush agar perhitungan berikutnya (mis. bunga berbunga per hari) sudah
+    # membaca baris yang baru ditambahkan, walau transaksi belum di-commit.
+    db.flush()
 
 
 def get_entries(db: Session, player_id: int) -> list[LedgerEntry]:
@@ -106,7 +113,7 @@ def take_loan(db: Session, player: Player, amount: int) -> dict:
     if debt + amount > config.MAX_TOTAL_DEBT:
         raise HTTPException(
             status_code=400,
-            detail=f"Melebihi batas total utang Rp{config.MAX_TOTAL_DEBT:,}",
+            detail=f"Melebihi batas total utang {_rupiah(config.MAX_TOTAL_DEBT)}",
         )
 
     fee = int(round(amount * config.LOAN_ADMIN_FEE_PCT / 100))
@@ -183,7 +190,7 @@ def repay(db: Session, player: Player, amount: int) -> dict:
     if amount > limit:
         raise HTTPException(
             status_code=400,
-            detail=f"Nominal melebihi saldo atau utang (maksimal Rp{limit:,})",
+            detail=f"Nominal melebihi saldo atau utang (maksimal {_rupiah(limit)})",
         )
 
     add_entry(db, player.id, "REPAY", cash_delta=-amount, debt_delta=-amount, note="Bayar cicilan")

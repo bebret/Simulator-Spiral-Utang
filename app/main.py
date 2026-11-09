@@ -1,6 +1,7 @@
 """Titik masuk FastAPI: endpoint JSON dan halaman HTML."""
 
 from contextlib import asynccontextmanager
+from datetime import timedelta, timezone
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
@@ -16,6 +17,7 @@ from .models import Player
 from .schemas import AdvanceDaysRequest, BetRequest, LoanRequest, PlayerCreate, RepaymentRequest
 
 BASE_DIR = Path(__file__).parent
+WIB = timezone(timedelta(hours=7))
 
 
 @asynccontextmanager
@@ -31,7 +33,9 @@ templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 
 def rupiah(value) -> str:
-    return "Rp" + f"{int(value):,}".replace(",", ".")
+    value = int(value)
+    sign = "−" if value < 0 else ""
+    return sign + "Rp" + f"{abs(value):,}".replace(",", ".")
 
 
 def signed_rupiah(value) -> str:
@@ -44,6 +48,14 @@ def signed_rupiah(value) -> str:
 
 templates.env.filters["rupiah"] = rupiah
 templates.env.filters["signed_rupiah"] = signed_rupiah
+
+
+def wib_time(value) -> str:
+    """Timestamp database (UTC) ditampilkan dalam WIB agar mudah dibaca."""
+    return value.astimezone(WIB).strftime("%d/%m %H:%M")
+
+
+templates.env.filters["wib_time"] = wib_time
 
 
 @app.get("/health")

@@ -138,7 +138,7 @@
                              "BET": "Taruhan", "WIN": "Menang", "REPAY": "Cicilan"} %}
             {% for entry in entries %}
             <tr>
-              <td>{{ entry.created_at.strftime("%d/%m %H:%M") }}</td>
+              <td>{{ entry.created_at|wib_time }}</td>
               <td>{{ labels.get(entry.type, entry.type) }}</td>
               <td class="num">{{ entry.cash_delta|signed_rupiah }}</td>
               <td class="num">{{ entry.debt_delta|signed_rupiah }}</td>
@@ -189,7 +189,8 @@
     let spinCount = 0;
     let totalStaked = 0;
 
-    const money = (value) => "Rp" + new Intl.NumberFormat("id-ID").format(value);
+    const money = (value) =>
+      (value < 0 ? "−Rp" : "Rp") + new Intl.NumberFormat("id-ID").format(Math.abs(value));
 
     const reels = [
       document.getElementById("reel-0"),
