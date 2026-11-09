@@ -52,11 +52,24 @@ bermain tanpa akun tetap bisa.
 
 ```mermaid
 flowchart LR
-    B[Browser] -->|http://localhost:8000| APP[app<br/>FastAPI + Jinja2]
-    APP -->|db:5432 via appnet| DB[(db<br/>PostgreSQL 16)]
-    DB --- VOL[(volume pgdata)]
-    B2[Browser] -->|http://localhost:8080<br/>profile tools| ADM[adminer]
-    ADM -->|db:5432| DB
+    subgraph HOST["Host: localhost"]
+        B["Browser<br/>localhost:8000"]
+        B2["Browser<br/>localhost:8080"]
+
+        subgraph NET["network: appnet (bridge)"]
+            APP["container: app<br/>FastAPI + Jinja2<br/>uvicorn :8000"]
+            DB[("container: db<br/>PostgreSQL 16<br/>:5432 (internal)")]
+            ADM["container: adminer<br/>profile: tools<br/>:8080"]
+        end
+
+        VOL[("volume: pgdata<br/>/var/lib/postgresql/data")]
+    end
+
+    B -->|"HTTP 8000:8000"| APP
+    B2 -->|"HTTP 8080:8080<br/>opsional"| ADM
+    APP -->|"TCP db:5432"| DB
+    ADM -->|"TCP db:5432"| DB
+    DB --- VOL
 ```
 
 - Satu **user-defined network** (`appnet`) untuk semua container.
@@ -291,12 +304,20 @@ docker compose down -v   # ini yang menghapus volume dan seluruh data
 
 ## Screenshot
 
-Simpan hasil tangkapan layar di `docs/screenshots/`:
+Halaman awal: form nickname dan penjelasan cara kerja simulasi.
 
-- `docs/screenshots/01-halaman-permainan.png`
-- `docs/screenshots/02-layar-refleksi.png`
-- `docs/screenshots/03-docker-compose-ps.png`
-- `docs/screenshots/04-docker-images.png`
+![Halaman awal](docs/screenshots/01-halaman-permainan.png)
+
+Halaman permainan: ticker saldo/utang/hasil taruhan, slot tiga reel, serta panel
+pinjaman, cicilan, dan maju waktu.
+
+![Halaman permainan](docs/screenshots/02-layar-refleksi.png)
+
+Bukti container berjalan dan ukuran image:
+
+![docker compose ps](docs/screenshots/03-docker-compose-ps.png)
+
+![docker images](docs/screenshots/04-docker-images.png)
 
 ## Tautan
 
