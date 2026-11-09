@@ -1,0 +1,65 @@
+# Orkestrasi tiga container: app (FastAPI), db (PostgreSQL), adminer (profil tools).
+# Konfigurasi sensitif dibaca dari .env — file itu tidak di-commit.
+
+services:
+  app:
+    # Image dibangun dari Dockerfile di folder ini.
+    build: .
+    image: debtsim-app:1.0.0
+    # Semua variabel (POSTGRES_*, aturan simulasi) dibaca dari .env.
+    env_file: .env
+    environment:
+      # Host database adalah nama service "db" di network appnet, bukan localhost.
+      DB_HOST: db
+      DB_PORT: "5432"
+    ports:
+      - "8000:8000"
+    # Baru start setelah database benar-benar lolos healthcheck.
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - appnet
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    env_file: .env
+    volumes:
+      # Named volume: data tetap ada walau container dihapus.
+      - pgdata:/var/lib/postgresql/data
+    # Port database sengaja tidak dibuka ke host; hanya bisa diakses lewat appnet.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - appnet
+    restart: unless-stopped
+
+  adminer:
+    image: adminer:4.8.1
+    # Hanya berjalan bila diminta: docker compose --profile tools up -d
+    profiles: ["tools"]
+    ports:
+      - "8080:8080"
+    environment:
+      # Langsung menunjuk ke service db saat halaman login dibuka.
+      ADMINER_DEFAULT_SERVER: db
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - appnet
+    restart: unless-stopped
+
+# Satu user-defined network agar container bisa saling memanggil lewat nama service.
+networks:
+  appnet:
+    driver: bridge
+
+volumes:
+  # Volume bernama untuk data PostgreSQL.
+  pgdata:
