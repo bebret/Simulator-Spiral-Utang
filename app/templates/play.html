@@ -27,8 +27,8 @@
         <span class="value negative" id="debt">{{ debt|rupiah }}</span>
       </div>
       <div class="ticker-item">
-        <span class="label">Kerugian taruhan</span>
-        <span class="value negative" id="bet-loss">{{ bet_loss|rupiah }}</span>
+        <span class="label">Hasil taruhan</span>
+        <span class="value" id="bet-loss">{{ bet_loss|net_result }}</span>
       </div>
     </section>
 
@@ -60,9 +60,12 @@
         <input id="bet-custom" type="number" min="1" step="1000" placeholder="mis. 25000">
 
         <button class="btn btn-primary btn-wide" id="spin" type="button">PUTAR</button>
+        <p class="muted small" id="sound-hint" hidden>
+          Suara masih mati. Klik tombol “Suara: mati” di kanan atas panel untuk menyalakannya.
+        </p>
         <p class="error" id="bet-error" hidden></p>
         <p class="muted small" style="margin-top:10px;">
-          Setiap 10 putaran muncul pengingat. Tidak ada suara, bonus, atau free spin.
+          Setiap 10 putaran muncul pengingat. Tidak ada suara kemenangan, bonus, atau free spin.
         </p>
       </section>
 
@@ -173,7 +176,7 @@
     <dl class="kv">
       <dt>Putaran</dt><dd id="rc-rounds">0</dd>
       <dt>Total taruhan</dt><dd id="rc-staked">Rp0</dd>
-      <dt>Total kerugian taruhan</dt><dd id="rc-loss">Rp0</dd>
+      <dt>Hasil taruhan</dt><dd id="rc-loss">Rp0</dd>
       <dt>Sisa utang</dt><dd id="rc-debt">Rp0</dd>
     </dl>
     <div class="actions">
@@ -197,6 +200,12 @@
 
     const money = (value) =>
       (value < 0 ? "−Rp" : "Rp") + new Intl.NumberFormat("id-ID").format(Math.abs(value));
+
+    // Positif = rugi, negatif = masih untung. Ditulis jelas agar tidak terbalik.
+    function netResult(value) {
+      if (value === 0) return "Rp0";
+      return value > 0 ? "Rugi " + money(value) : "Untung " + money(-value);
+    }
 
     const reels = [
       document.getElementById("reel-0"),
@@ -234,7 +243,7 @@
     }
 
     // Klik mekanis pendek: satu nada rendah yang cepat meredup.
-    function playClick() {
+    function playClick(volume = 0.14, frequency = 180) {
       if (!soundOn) return;
       const ctx = ensureAudio();
       if (!ctx) return;
@@ -242,20 +251,23 @@
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "square";
-      osc.frequency.setValueAtTime(170, now);
-      osc.frequency.exponentialRampToValueAtTime(85, now + 0.05);
-      gain.gain.setValueAtTime(0.06, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.07);
+      osc.frequency.setValueAtTime(frequency, now);
+      osc.frequency.exponentialRampToValueAtTime(frequency / 2, now + 0.05);
+      gain.gain.setValueAtTime(volume, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
       osc.connect(gain).connect(ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.08);
+      osc.stop(now + 0.09);
     }
 
     soundButton.addEventListener("click", () => {
       soundOn = !soundOn;
       sessionStorage.setItem("slotSound", soundOn ? "on" : "off");
       renderSoundButton();
-      playClick();
+      if (soundOn) {
+        document.getElementById("sound-hint").hidden = true;
+        playClick(0.16, 200);
+      }
     });
     renderSoundButton();
 
@@ -292,6 +304,8 @@
       reels.forEach((reel) => {
         reel.dataset.stopped = "false";
       });
+      // Dibuka di dalam klik pengguna agar browser mengizinkan audio berbunyi.
+      ensureAudio();
 
       let data;
       try {
@@ -323,9 +337,15 @@
       // Reel berhenti berurutan kiri ke kanan; total ±1,5 detik.
       const stopAt = [700, 1100, 1500];
       const start = performance.now();
+      let lastWhir = 0;
 
       function frame(now) {
         const elapsed = now - start;
+        // Dengung reel berputar: klik-klik kecil dan pelan.
+        if (soundOn && elapsed < 1450 && now - lastWhir >= 110) {
+          lastWhir = now;
+          playClick(0.04, 240);
+        }
         reels.forEach((reel, index) => {
           if (elapsed < stopAt[index]) {
             reel.textContent = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
@@ -353,7 +373,7 @@
       betLoss = data.session_bet_loss;
       cashEl.textContent = money(cash);
       debtEl.textContent = money(debt);
-      betLossEl.textContent = money(betLoss);
+      betLossEl.textContent = netResult(betLoss);
 
       spinCount += 1;
       totalStaked += amount;
@@ -368,6 +388,10 @@
 
       spinButton.disabled = false;
 
+      if (!soundOn) {
+        document.getElementById("sound-hint").hidden = false;
+      }
+
       if (spinCount % 10 === 0) {
         openRealityCheck();
       }
@@ -376,7 +400,7 @@
     function openRealityCheck() {
       document.getElementById("rc-rounds").textContent = spinCount;
       document.getElementById("rc-staked").textContent = money(totalStaked);
-      document.getElementById("rc-loss").textContent = money(betLoss);
+      document.getElementById("rc-loss").textContent = netResult(betLoss);
       document.getElementById("rc-debt").textContent = money(debt);
       if (typeof dialog.showModal === "function") {
         dialog.showModal();

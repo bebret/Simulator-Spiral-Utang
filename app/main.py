@@ -51,6 +51,19 @@ templates.env.filters["signed_rupiah"] = signed_rupiah
 templates.env.filters["minus"] = lambda value: str(value).replace("-", "−")
 
 
+def net_result(value) -> str:
+    """Hasil taruhan bersih: positif = rugi, negatif = masih untung."""
+    value = int(value)
+    if value > 0:
+        return "Rugi " + rupiah(value)
+    if value < 0:
+        return "Untung " + rupiah(-value)
+    return "Rp0"
+
+
+templates.env.filters["net_result"] = net_result
+
+
 def wib_time(value) -> str:
     """Timestamp database (UTC) ditampilkan dalam WIB agar mudah dibaca."""
     return value.astimezone(WIB).strftime("%d/%m %H:%M")

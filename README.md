@@ -156,6 +156,10 @@ Cicilan menerima **nominal bebas** selama saldo kas cukup. Bila nominal yang
 diketik melebihi sisa utang, hanya sebesar sisa utang yang dipotong dari saldo —
 kelebihan tidak hangus.
 
+Ticker dan layar refleksi menampilkan `total_bet_loss` (total taruhan − total
+kemenangan) sebagai **"Rugi Rp…"** bila bernilai positif dan **"Untung Rp…"**
+bila masih di atas (nilai harapan negatif, jadi untung hanya sementara).
+
 Tabel dibuat saat startup dengan `Base.metadata.create_all`. Ini cukup untuk
 proyek satu tabel kecil dan idempoten: saat container `app` dijalankan ulang,
 tabel yang sudah ada tidak dibuat lagi, dan datanya tetap ada karena disimpan

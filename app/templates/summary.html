@@ -42,8 +42,8 @@
         <span class="value negative">{{ summary.total_interest|rupiah }}</span>
       </div>
       <div class="stat">
-        <span class="label">Total kerugian taruhan</span>
-        <span class="value negative">{{ summary.total_bet_loss|rupiah }}</span>
+        <span class="label">Hasil taruhan (net)</span>
+        <span class="value">{{ summary.total_bet_loss|net_result }}</span>
       </div>
       <div class="stat">
         <span class="label">Jumlah pinjaman</span>
