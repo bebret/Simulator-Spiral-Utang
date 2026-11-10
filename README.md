@@ -10,14 +10,8 @@ sendiri bagaimana keduanya saling memperparah kerugian.
 ## Deklarasi Penggunaan AI
 
 Formulir **BINUS University Artificial Intelligence Use Declaration Form**
-(`FM-BINUS-AE-FSM-144/R1`) untuk UTS Cloud Services. Klik gambar untuk membuka
-PDF aslinya.
-
-[![Deklarasi penggunaan AI - halaman 1](docs/screenshots/05-ai-declaration-page-1.png)](docs/AI-Declaration-Form.pdf)
-
-[![Deklarasi penggunaan AI - halaman 2](docs/screenshots/06-ai-declaration-page-2.png)](docs/AI-Declaration-Form.pdf)
-
-Berkas PDF: [docs/AI-Declaration-Form.pdf](docs/AI-Declaration-Form.pdf)
+(`FM-BINUS-AE-FSM-144/R1`) untuk UTS Cloud Services:
+[docs/AI-Declaration-Form.pdf](docs/AI-Declaration-Form.pdf)
 
 ## Tujuan Edukasi dan Batasan
 
