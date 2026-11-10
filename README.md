@@ -7,6 +7,18 @@ sendiri bagaimana keduanya saling memperparah kerugian.
 > **SIMULASI EDUKASI — TIDAK ADA UANG ASLI.**
 > Tidak ada merek, tautan, payment gateway, atau data pribadi asli di aplikasi ini.
 
+## Deklarasi Penggunaan AI
+
+Formulir **BINUS University Artificial Intelligence Use Declaration Form**
+(`FM-BINUS-AE-FSM-144/R1`) untuk UTS Cloud Services. Klik gambar untuk membuka
+PDF aslinya.
+
+[![Deklarasi penggunaan AI - halaman 1](docs/screenshots/05-ai-declaration-page-1.png)](docs/AI-Declaration-Form.pdf)
+
+[![Deklarasi penggunaan AI - halaman 2](docs/screenshots/06-ai-declaration-page-2.png)](docs/AI-Declaration-Form.pdf)
+
+Berkas PDF: [docs/AI-Declaration-Form.pdf](docs/AI-Declaration-Form.pdf)
+
 ## Tujuan Edukasi dan Batasan
 
 Proyek ini meniru **mekanisme** produk pinjol dan judi online, bukan daya
@@ -321,8 +333,8 @@ Bukti container berjalan dan ukuran image:
 
 ## Tautan
 
-- Artikel: _(isi oleh pemilik proyek)_
-- Video YouTube: _(isi oleh pemilik proyek)_
+- Artikel: https://medium.com/@albertatbinus/simulator-spiral-utang-literasi-finansial-berbasis-web-dengan-melihat-bahaya-dari-pinjaman-online-f4d0043bca9c?sharedUserId=albertatbinus
+- Video YouTube: https://youtu.be/dM2LViQfg2o
 
 ## Atribusi
 
